@@ -66,6 +66,9 @@ from colabfold.utils import (
     CFMMCIFIO,
 )
 
+from colabfold.colabfold import plot_protein
+
+
 from Bio.PDB import MMCIFParser, PDBParser, MMCIF2Dict
 from Bio.PDB.PDBIO import Select
 
@@ -509,7 +512,7 @@ def predict_structure(
             # callback for visualization
             if prediction_callback is not None:
                 prediction_callback(unrelaxed_protein, sequences_lengths,
-                                    result, input_features, (tag, False))
+                                    result, input_features, (tag, False), prefix, result_dir, model_num)
 
             #########################
             # save results
@@ -1596,6 +1599,16 @@ def set_model_type(is_complex: bool, model_type: str) -> str:
             model_type = "alphafold2_ptm"
     return model_type
 
+
+def plot_protein_prediction_callback(protein_obj, length,
+                        prediction_result, input_features, mode, jobname, result_dir, model_num):
+  model_name, relaxed = mode
+  if not relaxed:
+    fig = plot_protein(protein_obj, Ls=length, dpi=150)
+    figpath = result_dir.joinpath(f"{jobname}_protein_model_{model_num}.png")
+    fig.savefig(str(figpath), bbox_inches='tight')
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument("input",
@@ -1842,6 +1855,7 @@ def main():
         use_gpu_relax = args.use_gpu_relax,
         save_all=args.save_all,
         save_recycles=args.save_recycles,
+        prediction_callback=plot_protein_prediction_callback,
     )
 
 if __name__ == "__main__":
